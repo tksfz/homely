@@ -15,10 +15,11 @@ class Scanner {
 
   def findAllHttp(): Seq[Resource] = {
     nmap("-F -oX - --script=http-headers --script=http-title 192.168.1.0/24").flatMap { result =>
-        DerivedResourceDetector.gen[ResourceType].detect(result).map { resourceType =>
-          Resource(result.url, resourceType)
-        }
+      println(result)
+      DerivedResourceDetector.gen[ResourceType].detect(result).map { resourceType =>
+        Resource(result.url, resourceType)
       }
+    }
   }
 
   def nmap(args: String): Seq[ScanResult] = {
