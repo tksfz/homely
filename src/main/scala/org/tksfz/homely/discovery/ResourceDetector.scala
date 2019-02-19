@@ -11,7 +11,8 @@ trait LowPriorityImplicits {
   }
 }
 
-object DetectorImplicits extends ProxmoxImplicits with PiholeImplicits
+object DetectorImplicits extends ProxmoxImplicits with PiholeImplicits with BitwardenImplicits with FreenasImplicits
+  with RouterImplicits with PrinterImplicits
 
 object ResourceDetector extends LowPriorityImplicits
 
