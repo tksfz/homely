@@ -32,7 +32,7 @@ object DerivedResourceDetector {
   def dispatch[T](ctx: SealedTrait[ResourceDetector, T]): ResourceDetector[T] =
     new ResourceDetector[T] {
       def detect(result: ScanResult): Option[T] = {
-        ctx.subtypes.toStream.map(_.typeclass.detect(result)).collectFirst { case Some(x) => x  }
+        ctx.subtypes.toStream.map(_.typeclass.detect(result)).collectFirst { case Some(resourceType) => resourceType  }
       }
     }
 
