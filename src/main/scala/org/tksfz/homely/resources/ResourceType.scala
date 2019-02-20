@@ -1,22 +1,22 @@
 package org.tksfz.homely.resources
 
 sealed trait ResourceType {
-  def displayLabel: String = this.getClass.getSimpleName
+  def displayLabel: String = this.getClass.getSimpleName.stripSuffix("$")
   def icon: String = this.getClass.getSimpleName
   val category: ResourceCategory
 }
 
 // Server apps
 sealed trait ServerAppResourceType extends ResourceType { val category = ServerApp }
-case object Proxmox extends ServerAppResourceType
-case object Freenas extends ServerAppResourceType
-case object Pihole extends ServerAppResourceType
+case object Proxmox extends ServerAppResourceType { override def icon = "Proxmox-VE-logo.svg" }
+case object Freenas extends ServerAppResourceType { override def icon = "FreeNAS-Logo.png" }
+case object Pihole extends ServerAppResourceType { override def icon = "pi-hole-logo.png" }
 
 // Desktop apps
 sealed trait AppResourceType extends ResourceType { val category = App }
 case object Plex extends AppResourceType
 case object Transmission extends AppResourceType
-case object Bitwarden extends AppResourceType
+case object Bitwarden extends AppResourceType { override def icon = "Bitwarden.png" }
 
 // IOT
 sealed trait IotResourceType extends ResourceType { val category = Iot }

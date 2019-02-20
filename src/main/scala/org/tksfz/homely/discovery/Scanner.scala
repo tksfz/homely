@@ -31,7 +31,6 @@ class Scanner {
       host <- xml \ "host"
       port <- host \ "ports" \ "port"
     } yield {
-      val address = host \ "address" \@ "addr"
       val hostname = host \ "hostnames" \ "hostname" \@ "name"
       val scriptOutputs =
         (for {
@@ -44,11 +43,21 @@ class Scanner {
       val httpHeaders = scriptOutputs.get("http-headers")
       val htmlTitle = scriptOutputs.get("http-title")
       if (httpHeaders.isDefined || htmlTitle.isDefined) {
-        Some(ScanResult(url = address, httpHeaders = httpHeaders.getOrElse(""), htmlTitle = htmlTitle.getOrElse("")))
+        val url = mkUrl(host = host \ "address" \@ "addr", port = (port \@ "portid").toInt, protocolName = port \ "service" \@ "name")
+        Some(ScanResult(url = url, httpHeaders = httpHeaders.getOrElse(""), htmlTitle = htmlTitle.getOrElse("")))
       } else {
         None
       }
     }).flatten
+  }
+
+  private[this] def mkUrl(host: String, port: Int, protocolName: String) = {
+    val scheme = protocolName.split('-').head // "http-alt" => "http"
+    val portSuffix = (protocolName, port) match {
+      case ("http", 80) | ("https", 443) => ""
+      case _ => s":$port"
+    }
+    s"${scheme}://$host$portSuffix"
   }
 }
 
