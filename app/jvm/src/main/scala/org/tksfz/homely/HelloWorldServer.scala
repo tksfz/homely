@@ -3,6 +3,7 @@ package org.tksfz.homely
 import cats.effect.{Effect, IO}
 import fs2.StreamApp
 import org.http4s.server.blaze.BlazeBuilder
+import org.http4s.server.middleware.CORS
 
 import scala.concurrent.ExecutionContext
 
@@ -16,9 +17,10 @@ object ServerStream {
 
   def helloWorldService[F[_]: Effect] = new HelloWorldService[F].service
 
-  def stream[F[_]: Effect](implicit ec: ExecutionContext) =
+  def stream[F[_]: Effect](implicit ec: ExecutionContext) = {
     BlazeBuilder[F]
-      .bindHttp(8080, "0.0.0.0")
-      .mountService(helloWorldService, "/")
+      .bindHttp(8000, "0.0.0.0")
+      .mountService(CORS(helloWorldService), "/")
       .serve
+  }
 }
