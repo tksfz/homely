@@ -1,11 +1,6 @@
 package org.tksfz.homely.discovery
 
-import org.tksfz.homely.resources.ResourceType
-
-case class Resource(
-                   uri: String,
-                   resourceType: ResourceType
-                   )
+import org.tksfz.homely.resources.{Resource, ResourceType}
 
 case class ScanResult(url: String, httpHeaders: String, htmlTitle: String)
 

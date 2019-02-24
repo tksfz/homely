@@ -5,6 +5,9 @@ import monix.reactive.Observable
 import org.scalajs.dom.{Blob, XMLHttpRequest}
 import org.scalajs.dom.ext.{Ajax, AjaxException}
 import outwatch.http.Http.{BodyType, Request, Response}
+import io.circe.generic.auto._
+import io.circe.parser.decode
+import org.tksfz.homely.resources.Resource
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -15,10 +18,19 @@ object Main {
 
     val myComponent = div("Hello World")
 
-    val html = request(Observable(Request("http://localhost:8000/hello")))
+    val resources = request(Observable(Request("http://localhost:8000/resources")))
       .map(_.response.toString)
+      .map(decode[Seq[Resource]])
+      .map(_.getOrElse(Nil))
 
-    val content = div(h1("hello world"), div("blah", child <-- html))
+    val html = div("hi", resources
+      .map { resources =>
+        resources.map { resource =>
+          a(href := resource.uri, resource.resourceType.displayLabel)
+        }
+      })
+
+    val content = div(h1("hello world"), div("blah", html))
 
     //OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
     OutWatch.renderInto("#app", content).unsafeRunSync()
