@@ -14,26 +14,50 @@ import scala.scalajs.js
 import scala.scalajs.js.typedarray.ArrayBuffer
 
 object Main {
+  def appContainer(content: Observable[VNode]): VNode = {
+    div(
+      htmlTag("nav")(cls := "navbar has-shadow", role := "navigation", attr("aria-label") := "main navigation",
+        div(cls := "navbar-brand",
+          a(cls := "navbar-item", href := "https://bulma.io",
+            b("Homely")
+          )
+        ),
+        div(cls := "navbar-menu",
+          div(cls := "navbar-end",
+            a(cls := "navbar-item", "Settings")
+          )
+        )
+      ),
+      htmlTag("section")(cls := "section",
+        div(cls := "container",
+          div(id := "pageContent", content)
+        )
+      )
+    )
+  }
+
   def main(args: Array[String]): Unit = {
-
-    val myComponent = div("Hello World")
-
     val resources = request(Observable(Request("http://localhost:8000/resources")))
       .map(_.response.toString)
       .map(decode[Seq[Resource]])
       .map(_.getOrElse(Nil))
 
-    val html = div("hi", resources
-      .map { resources =>
-        resources.map { resource =>
-          a(href := resource.uri, resource.resourceType.displayLabel)
-        }
-      })
-
-    val content = div(h1("hello world"), div("blah", html))
+    val html = resources.map { resources =>
+      div(
+        resources.grouped(6).map { resourceGroup =>
+          div(cls := "columns",
+            resourceGroup.map { resource =>
+              div(cls := "column",
+                a(href := resource.uri, resource.resourceType.displayLabel)
+              )
+            }
+          )
+        }.toSeq
+      )
+    }
 
     //OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
-    OutWatch.renderInto("#app", content).unsafeRunSync()
+    OutWatch.renderInto("#app", Main.appContainer(html)).unsafeRunSync()
   }
   private def toResponse(req: XMLHttpRequest): Response = {
     val body : BodyType = req.responseType match {
