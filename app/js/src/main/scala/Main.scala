@@ -19,14 +19,18 @@ object Main {
       htmlTag("nav")(cls := "navbar has-shadow", role := "navigation", attr("aria-label") := "main navigation",
         div(cls := "navbar-brand",
           a(cls := "navbar-item", href := "https://bulma.io",
-            b("Homely")
+            span(cls := "icon", i(cls := "fas fa-home fa-2x")),
+            span(h1(cls := "title is-4", "Homely"))
           )
         ),
         div(cls := "navbar-menu",
           div(cls := "navbar-end",
-            a(cls := "navbar-item", "Settings")
+            a(cls := "navbar-item",
+              span(cls := "icon", i(cls := "fas fa-cog")),
+              span("Settings"),
+            )
           )
-        )
+        ),
       ),
       htmlTag("section")(cls := "section",
         div(cls := "container",
@@ -43,22 +47,34 @@ object Main {
       .map(_.getOrElse(Nil))
 
     val html = resources.map { resources =>
-      div(
-        resources.grouped(6).map { resourceGroup =>
-          div(cls := "columns",
-            resourceGroup.map { resource =>
-              div(cls := "column",
-                a(href := resource.uri, resource.resourceType.displayLabel)
-              )
-            }
-          )
-        }.toSeq
-      )
+      div(cls := "columns is-multiline", resources.map { resource =>
+        div(cls := "column is-one-fifth",
+          appCard(s"resource-images/${resource.resourceType.icon}",
+            resource.uri,
+            resource.resourceType.displayLabel
+          ),
+        )
+      })
     }
 
     //OutWatch.renderReplace("#app", myComponent).unsafeRunSync()
     OutWatch.renderInto("#app", Main.appContainer(html)).unsafeRunSync()
   }
+
+  private def appCard(imgSrc: String, url: String, name: String) = {
+    div(cls := "card",
+      div(cls := "card-image has-text-centered",
+        figure(cls := "image is-128x128 is-inline-block",
+          img(src := imgSrc)
+        )
+      ),
+      div(cls := "card-footer",
+        a(cls := "card-footer-item", href := url,
+          name)
+      )
+    )
+  }
+
   private def toResponse(req: XMLHttpRequest): Response = {
     val body : BodyType = req.responseType match {
       case "" => req.response.asInstanceOf[String]
