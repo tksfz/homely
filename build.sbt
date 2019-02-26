@@ -1,7 +1,7 @@
 import org.scalajs.sbtplugin.ScalaJSPlugin.AutoImport.scalaJSModuleKind
 import sbt.Keys.version
 
-val Http4sVersion = "0.18.21"
+val Http4sVersion = "0.20.0-M6"
 val Specs2Version = "4.1.0"
 val LogbackVersion = "1.2.3"
 val circeVersion = "0.10.0"
