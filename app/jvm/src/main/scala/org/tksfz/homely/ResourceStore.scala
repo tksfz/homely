@@ -35,6 +35,7 @@ class ResourceStore(xa: Transactor[IO])(implicit cs: ContextShift[IO]) {
   def rescanAndSave() = {
     for {
       resources <- IO { scanner.findAllHttp() }
+      _ = println("saving ")
       saved <- db.mergeAll(resources).transact(xa)
     } yield {
       saved

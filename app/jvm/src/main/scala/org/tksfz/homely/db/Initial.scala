@@ -6,10 +6,7 @@ import org.tksfz.homely.resources.{Resource, ResourceType}
 import doobie._
 import doobie.implicits._
 
-case class DbResource(resourceType: ResourceType, uri: String, order: Option[Int], customName: Option[String],
-                      customImage: Option[Array[Byte]])
-
-object DbResource {
+trait ResourceTypeImplicits {
 
   import io.circe.parser.decode, io.circe.syntax._, io.circe.generic.auto._
 
@@ -28,7 +25,7 @@ object DbResource {
   }
 }
 
-class Initial(implicit cs: ContextShift[IO]) {
+class Initial(implicit cs: ContextShift[IO]) extends ResourceTypeImplicits {
   import scala.concurrent.ExecutionContext
 
   // A transactor that gets connections from java.sql.DriverManager and excutes blocking operations
@@ -49,7 +46,7 @@ class Initial(implicit cs: ContextShift[IO]) {
         id INTEGER PRIMARY KEY,
         resource_type TEXT NOT NULL,
         uri TEXT NOT NULL,
-        sort_order INTEGER NOT NULL,
+        sort_order INTEGER,
         custom_name TEXT,
         custom_image BLOB);""".update.run
 
@@ -74,7 +71,7 @@ class Initial(implicit cs: ContextShift[IO]) {
         val key = (r.resourceType, r.uri)
         existingResourcesUriAndType.contains(key)
       }
-      newDbResources = newResources.map(DbResource.fromScan)
+      newDbResources = newResources.map(fromScan)
       insert <- insertAll(newDbResources)
     } yield {
       insert
@@ -83,7 +80,6 @@ class Initial(implicit cs: ContextShift[IO]) {
 
   def insertAll(resources: Seq[DbResource]) = {
     import cats.implicits._
-    import DbResource.rtmeta
     val sql = """insert into resource (resource_type, uri, sort_order, custom_name, custom_image)
            |values (?, ?, ?, ?, ?)
        """.stripMargin
