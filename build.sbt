@@ -24,9 +24,7 @@ lazy val app = (crossProject in file("app"))
       "io.circe" %%% "circe-parser"
     ).map(_ % circeVersion),
   ).jsSettings(
-    libraryDependencies ++= Seq(
-      //"io.github.outwatch" %%% "outwatch" % "1.0.0-RC2"
-    ),
+    npmDependencies in Compile += "@shopify/draggable" -> "v1.0.0-beta.7",
     resolvers += "jitpack" at "https://jitpack.io",
     libraryDependencies += "com.github.outwatch" % "outwatch" % "master-SNAPSHOT",
     scalaJSUseMainModuleInitializer := true,

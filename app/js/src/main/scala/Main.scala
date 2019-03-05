@@ -8,12 +8,18 @@ import org.scalajs.dom.ext.{Ajax, AjaxException}
 import outwatch.http.Http.{BodyType, Request, Response}
 import io.circe.generic.auto._
 import io.circe.parser.decode
+import monix.execution.Ack
 import org.tksfz.homely.resources.Resource
 import outwatch.ProHandler
 
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
 import scala.scalajs.js.typedarray.ArrayBuffer
+
+@js.native
+@JSImport("@shopify/draggable/lib/sortable", "default")
+class Sortable(conatainers: js.Any, options: js.Any) extends js.Any
 
 object Main {
 
@@ -59,8 +65,16 @@ object Main {
       .map(decode[Seq[Resource]])
       .map(_.getOrElse(Nil))
 
+    val dragger = Sink.create[Unit] { _ =>
+      import org.scalajs.dom.document
+      Future.successful {
+        new Sortable(document.querySelectorAll(".columns"), js.Dynamic.literal(draggable = ".column"))
+        Ack.Continue
+      }
+    }
+
     val html = resources.map { resources =>
-      div(cls := "columns is-multiline", resources.map { resource =>
+      div(onSnabbdomInsert() --> dragger, cls := "columns is-multiline", resources.map { resource =>
         div(cls := "column is-one-fifth",
           appCard(s"resource-images/${resource.resourceType.icon}",
             resource.uri,
