@@ -22,7 +22,6 @@ object HelloWorldServer extends IOApp {
     case GET -> Root / "hello" / name =>
       Ok(s"Hello, $name.")
     case GET -> Root / "hello" =>
-      val resources = Seq(Resource("asdf", Proxmox))
       val html = new Scanner().findAllHttp().map { resource =>
         s"<a href='${resource.uri}'><img src='public/resource-images/${resource.resourceType.icon}'></img>${resource.resourceType.displayLabel}</a>"
       }.mkString("\n")

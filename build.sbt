@@ -21,7 +21,8 @@ lazy val app = (crossProject in file("app"))
     libraryDependencies ++= Seq(
       "io.circe" %%% "circe-core",
       "io.circe" %%% "circe-generic",
-      "io.circe" %%% "circe-parser"
+      "io.circe" %%% "circe-parser",
+      "io.circe" %%% "circe-generic-extras",
     ).map(_ % circeVersion),
   ).jsSettings(
     npmDependencies in Compile += "@shopify/draggable" -> "v1.0.0-beta.7",
@@ -49,6 +50,8 @@ lazy val app = (crossProject in file("app"))
       "org.specs2"     %% "specs2-core"          % Specs2Version % "test",
       "ch.qos.logback"  %  "logback-classic"     % LogbackVersion,
       "com.propensive" %% "magnolia" % "0.10.0",
+      "org.tpolecat" %% "doobie-core"      % "0.6.0",
+      "org.xerial" % "sqlite-jdbc" % "3.25.2",
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
     addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"),
