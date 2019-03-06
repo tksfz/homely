@@ -28,7 +28,7 @@ class ResourceStore(xa: Transactor[IO])(implicit cs: ContextShift[IO]) {
   val scanner = new Scanner()
   val db = new Initial()
 
-  def getFromDb(): IO[List[(Int, DbResource)]] = {
+  def getFromDb(): IO[Map[Int, DbResource]] = {
     db.findAll.transact(xa)
   }
 

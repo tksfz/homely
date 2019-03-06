@@ -9,6 +9,7 @@ import outwatch.http.Http.{BodyType, Request, Response}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import monix.execution.Ack
+import org.tksfz.homely.db.DbResource
 import org.tksfz.homely.resources.Resource
 import outwatch.ProHandler
 
@@ -60,10 +61,10 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
-    val resources = request(Observable(Request("http://localhost:8000/resources")))
+    val resources = request(Observable(Request("http://localhost:8000/dbresources")))
       .map(_.response.toString)
-      .map(decode[Seq[Resource]])
-      .map(_.getOrElse(Nil))
+      .map(decode[Map[Int, DbResource]])
+      .map(e => e.getOrElse(throw new IllegalArgumentException(e.toString)))
 
     val dragger = Sink.create[Unit] { _ =>
       import org.scalajs.dom.document
@@ -74,7 +75,7 @@ object Main {
     }
 
     val html = resources.map { resources =>
-      div(onSnabbdomInsert() --> dragger, cls := "columns is-multiline", resources.map { resource =>
+      div(onSnabbdomInsert() --> dragger, cls := "columns is-multiline", resources.toSeq.map { case (id, resource) =>
         div(cls := "column is-one-fifth",
           appCard(s"resource-images/${resource.resourceType.icon}",
             resource.uri,

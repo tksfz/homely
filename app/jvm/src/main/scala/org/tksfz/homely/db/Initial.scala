@@ -52,7 +52,7 @@ class Initial(implicit cs: ContextShift[IO]) extends ResourceTypeImplicits {
 
   println(create.transact(xa).unsafeRunSync())
 
-  def findAll = {
+  def findAll: ConnectionIO[Map[Int, DbResource]] = {
     sql"select * from resource"
       .query[(Int, String, String, Option[Int], Option[String], Option[Array[Byte]])]
       .map { case (id, resourceStr, uri, sortOrder, customName, customImage) =>
@@ -61,12 +61,13 @@ class Initial(implicit cs: ContextShift[IO]) extends ResourceTypeImplicits {
         id -> DbResource(resourceType, uri, sortOrder, customName, customImage)
       }
       .to[List]
+      .map(_.toMap)
   }
 
   def mergeAll(resources: Seq[Resource]): ConnectionIO[Int] = {
     for {
       existingResources <- findAll
-      existingResourcesUriAndType = existingResources.map(r => (r._2.resourceType, r._2.uri))
+      existingResourcesUriAndType = existingResources.values.map(r => (r.resourceType, r.uri)).toSet
       newResources = resources.filterNot { r =>
         val key = (r.resourceType, r.uri)
         existingResourcesUriAndType.contains(key)
