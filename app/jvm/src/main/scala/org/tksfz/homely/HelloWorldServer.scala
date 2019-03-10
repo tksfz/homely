@@ -34,19 +34,21 @@ object HelloWorldServer extends IOApp {
       val html = new Scanner().findAllHttp().map { resource =>
         s"<a href='${resource.uri}'><img src='public/resource-images/${resource.resourceType.icon}'></img>${resource.resourceType.displayLabel}</a>"
       }.mkString("\n")
-      Ok.apply(html, `Content-Type`(MediaType.all("text" -> "html")))
-    case req @ GET -> "public" /: path =>
-      StaticFile.fromResource("/public" + path.toString, global, Some(req)).getOrElseF(NotFound())
+      Ok.apply(html, `Content-Type`(MediaType.text.html))
     case GET -> Root / "resources" =>
       val resources = new Scanner().findAllHttp()
-      Ok(resources.asJson.toString, `Content-Type`(MediaType.all("application" -> "json")))
+      Ok(resources.asJson.toString, `Content-Type`(MediaType.application.json))
     case GET -> Root / "dbresources" =>
       for {
         resources <- db.findAll.transact[IO](xa)
-        result <- Ok.apply(resources.asJson.toString, `Content-Type`(MediaType.all("application" -> "json")))
+        result <- Ok.apply(resources.asJson.toString, `Content-Type`(MediaType.application.json))
       } yield {
         result
       }
+    case req @ GET -> Root =>
+      StaticFile.fromResource("/public/index.html", global, Some(req)).getOrElseF(NotFound())
+    case req @ GET -> path =>
+      StaticFile.fromResource("/public" + path.toString, global, Some(req)).getOrElseF(NotFound())
   }.orNotFound
 
   def run(args: List[String]): IO[ExitCode] =

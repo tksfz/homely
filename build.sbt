@@ -9,8 +9,8 @@ val circeVersion = "0.10.0"
 lazy val root = (project in file("."))
   .aggregate(appJS, appJVM)
 
+// ScalaJSBundlerPlugin docs https://github.com/scalacenter/scalajs-bundler/blob/master/manual/src/ornate/reference.md
 lazy val app = (crossProject in file("app"))
-  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
   .settings(
     unmanagedSourceDirectories in Compile +=
       baseDirectory.value  / "shared" / "main" / "scala",
@@ -24,10 +24,13 @@ lazy val app = (crossProject in file("app"))
       "io.circe" %%% "circe-parser",
       "io.circe" %%% "circe-generic-extras",
     ).map(_ % circeVersion),
-  ).jsSettings(
+  )
+  .jsConfigure(_.enablePlugins(ScalaJSBundlerPlugin))
+  .jsSettings(
     npmDependencies in Compile += "@shopify/draggable" -> "v1.0.0-beta.7",
     resolvers += "jitpack" at "https://jitpack.io",
     libraryDependencies += "com.github.outwatch" % "outwatch" % "master-SNAPSHOT",
+    useYarn := true,
     scalaJSUseMainModuleInitializer := true,
     scalaJSModuleKind := ModuleKind.CommonJSModule,
     webpackConfigFile in fastOptJS := Some(baseDirectory.value / "webpack.config.dev.js"),
@@ -42,24 +45,39 @@ lazy val app = (crossProject in file("app"))
         name.value.toLowerCase + "-fastopt.js.map") map { p => (inDir / p, outDir / p) }
       IO.copy(files, overwrite = true, preserveLastModified = true, preserveExecutable = true)
     }
-  ).jvmSettings(
+  )
+  .jvmSettings(
+    // brings assets into server package
+    // https://stackoverflow.com/questions/37633251/serving-scala-js-assets
+    unmanagedResourceDirectories in Compile += appJS.base / "assets",
     libraryDependencies ++= Seq(
       "org.http4s"      %% "http4s-blaze-server" % Http4sVersion,
       "org.http4s"      %% "http4s-circe"        % Http4sVersion,
       "org.http4s"      %% "http4s-dsl"          % Http4sVersion,
-      "org.specs2"     %% "specs2-core"          % Specs2Version % "test",
+      "org.specs2"      %% "specs2-core"         % Specs2Version % "test",
       "ch.qos.logback"  %  "logback-classic"     % LogbackVersion,
-      "com.propensive" %% "magnolia" % "0.10.0",
-      "org.tpolecat" %% "doobie-core"      % "0.6.0",
-      "org.xerial" % "sqlite-jdbc" % "3.25.2",
+      "com.propensive"  %% "magnolia"            % "0.10.0",
+      "org.tpolecat"    %% "doobie-core"         % "0.6.0",
+      "org.xerial"      % "sqlite-jdbc"          % "3.25.2",
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
     addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"),
   )
 
-lazy val appJS = app.js
+import Path.rebase
+
+lazy val appJS: Project = app.js
 lazy val appJVM = app.jvm.settings(
-  (resources in Compile) += (fastOptJS in (appJS, Compile)).value.data
+  // https://www.edc4it.com/blog/scala/exploring-options-in-making-scalajs-javascript-available-to-server.html
+  resourceGenerators in Compile += Def.task {
+    println("Copying scalajs-bundler output to jvm/target")
+    val files = ((crossTarget in(appJS, Compile)).value / "scalajs-bundler/main" ** ("homely*.js" || "homely*.map")).get
+    val mappings: Seq[(File,String)] = files pair
+      rebase((crossTarget in(appJS, Compile)).value / "scalajs-bundler/main",
+        ((resourceManaged in  Compile).value / "public/").getAbsolutePath )
+    val map: Seq[(File, File)] = mappings.map { case (s, t) => (s, file(t))}
+    IO.copy(map).toSeq
+  }.dependsOn(webpack in(appJS, Compile, fastOptJS))
 )
 
 // when running the "dev" alias, after every fastOptJS compile all artifacts are copied into
