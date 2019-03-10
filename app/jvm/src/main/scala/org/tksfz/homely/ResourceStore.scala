@@ -16,6 +16,8 @@ case object ScanNotStarted extends ScanStatus
 case class ScanInProgress(checkAfter: Duration) extends ScanStatus
 case class ScanDone(resources: Seq[Resource], nmapRaw: String) extends ScanStatus
 
+// TODO: refresh on initial load
+// TODO: images for every case, at least generic images
 /** Facade over resource discovery and db */
 class ResourceStore(xa: Transactor[IO])(implicit cs: ContextShift[IO]) {
   /**
