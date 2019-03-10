@@ -46,7 +46,9 @@ lazy val app = (crossProject in file("app"))
       IO.copy(files, overwrite = true, preserveLastModified = true, preserveExecutable = true)
     }
   )
+  .jvmConfigure(_.enablePlugins(DockerPlugin))
   .jvmSettings(
+    Compile/mainClass := Some("org.tksfz.homely.HelloWorldServer"),
     // brings assets into server package
     // https://stackoverflow.com/questions/37633251/serving-scala-js-assets
     unmanagedResourceDirectories in Compile += appJS.base / "assets",
@@ -62,9 +64,29 @@ lazy val app = (crossProject in file("app"))
     ),
     addCompilerPlugin("org.spire-math" %% "kind-projector"     % "0.9.6"),
     addCompilerPlugin("com.olegpy"     %% "better-monadic-for" % "0.2.4"),
-  )
 
-import Path.rebase
+    // https://github.com/marcuslonnberg/sbt-docker#defining-a-dockerfile
+    dockerfile in docker := {
+      val jarFile: File = sbt.Keys.`package`.in(Compile, packageBin).value
+      val classpath = (managedClasspath in Compile).value
+      val mainclass = mainClass.in(Compile, packageBin).value.getOrElse(sys.error("Expected exactly one main class"))
+      val jarTarget = s"/app/${jarFile.getName}"
+      // Make a colon separated classpath with the JAR file
+      val classpathString = classpath.files.map("/app/" + _.getName)
+        .mkString(":") + ":" + jarTarget
+      new Dockerfile {
+        // Base image
+        from("openjdk:8-jre-alpine")
+        run("apk", "add", "nmap", "nmap-scripts")
+        // Add all files on the classpath
+        add(classpath.files, "/app/")
+        // Add the JAR file
+        add(jarFile, jarTarget)
+        // On launch run Java with the classpath and the main class
+        entryPoint("java", "-cp", classpathString, mainclass)
+      }
+    }
+  )
 
 lazy val appJS: Project = app.js
 lazy val appJVM = app.jvm.settings(
@@ -73,7 +95,7 @@ lazy val appJVM = app.jvm.settings(
     println("Copying scalajs-bundler output to jvm/target")
     val files = ((crossTarget in(appJS, Compile)).value / "scalajs-bundler/main" ** ("homely*.js" || "homely*.map")).get
     val mappings: Seq[(File,String)] = files pair
-      rebase((crossTarget in(appJS, Compile)).value / "scalajs-bundler/main",
+      Path.rebase((crossTarget in(appJS, Compile)).value / "scalajs-bundler/main",
         ((resourceManaged in  Compile).value / "public/").getAbsolutePath )
     val map: Seq[(File, File)] = mappings.map { case (s, t) => (s, file(t))}
     IO.copy(map).toSeq
