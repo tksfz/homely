@@ -84,6 +84,7 @@ lazy val app = (crossProject in file("app"))
         add(jarFile, jarTarget)
         // On launch run Java with the classpath and the main class
         entryPoint("java", "-cp", classpathString, mainclass)
+        expose(8000)
       }
     }
   )
