@@ -9,8 +9,7 @@ class Scanner {
   import DetectorImplicits._
 
   def findAllHttp(): Seq[Resource] = {
-    nmap("-F -oX - --script=http-headers --script=http-title 192.168.1.0/24").flatMap { result =>
-      println(result)
+    nmap("-p http* -sT -oX - --script=http-headers --script=http-title 192.168.1.0/24").flatMap { result =>
       DerivedResourceDetector.gen[ResourceType].detect(result).map { resourceType =>
         Resource(result.url, resourceType)
       }
@@ -20,7 +19,8 @@ class Scanner {
   def nmap(args: String): Seq[ScanResult] = {
     import scala.sys.process._
     import scala.xml._
-    val xmlStr = ("nmap " + args).lineStream.mkString("")
+    val stream = ("nmap " + args).lineStream
+    val xmlStr = stream.mkString("")
     val xml = XML.withSAXParser(XML.parser).loadString(xmlStr)
     (for {
       host <- xml \ "host"
